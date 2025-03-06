@@ -1,53 +1,49 @@
-// Modelo responsável por todas as operações de dados
-import { promises as fs } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import fs from 'fs';
+import path from 'path';
 
 class MusicModel {
-    constructor() {
-        this.dataPath = join(__dirname, '../data/musics.json');
+    static songs = [];
+
+    static loadSongs() {
+        const dataPath = path.resolve('src/data/musics.json');
+        const data = fs.readFileSync(dataPath, 'utf-8');
+        this.songs = JSON.parse(data);
     }
 
-    async getAllMusics() {
-        const data = await fs.readFile(this.dataPath, 'utf8');
-        return JSON.parse(data);
+    static getAll() {
+        return this.songs;
     }
 
-    async getMusicById(id) {
-        const musics = await this.getAllMusics();
-        return musics.find(music => music.id === id);
+    static getById(id) {
+        return this.songs.find(song => song.id === id);
     }
 
-    async createMusic(musicData) {
-        const musics = await this.getAllMusics();
-        const newMusic = {
-            id: Date.now().toString(),
-            ...musicData
-        };
-        musics.push(newMusic);
-        await fs.writeFile(this.dataPath, JSON.stringify(musics, null, 2));
-        return newMusic;
+    static create(title, author) {
+        const newSong = { id: this.songs.length + 1, title, author };
+        this.songs.push(newSong);
+        return newSong;
     }
 
-    async updateMusic(id, musicData) {
-        const musics = await this.getAllMusics();
-        const index = musics.findIndex(music => music.id === id);
-        if (index === -1) return null;
-
-        musics[index] = { ...musics[index], ...musicData };
-        await fs.writeFile(this.dataPath, JSON.stringify(musics, null, 2));
-        return musics[index];
+    static update(id, title, author) {
+        const songIndex = this.songs.findIndex(song => song.id === id);
+        if (songIndex === -1) {
+            return null;
+        }
+        this.songs[songIndex] = { id, title, author };
+        return this.songs[songIndex];
     }
 
-    async deleteMusic(id) {
-        const musics = await this.getAllMusics();
-        const filteredmusics = musics.filter(music => music.id !== id);
-        await fs.writeFile(this.dataPath, JSON.stringify(filteredmusics, null, 2));
+    static delete(id) {
+        const songIndex = this.songs.findIndex(song => song.id === id);
+        if (songIndex === -1) {
+            return false;
+        }
+        this.songs.splice(songIndex, 1);
         return true;
     }
 }
 
-export default new MusicModel();
+// Carregar as músicas ao iniciar o servidor
+MusicModel.loadSongs();
+
+export default MusicModel;
