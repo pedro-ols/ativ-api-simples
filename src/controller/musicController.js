@@ -30,4 +30,4 @@ class MusicController{
     };
 };
 
-export default new TarefaController();
+export default new MusicController();
